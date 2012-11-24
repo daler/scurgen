@@ -11,7 +11,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 import matplotlib.gridspec as gs
 import pybedtools as pbt
 from scurgen.hilbert import HilbertMatrix
-
+import metaseq
 
 def data_dir():
     """

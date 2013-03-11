@@ -1,4 +1,4 @@
-from bx.bbi.bigwig_file import BigWigFile
+import simplejson
 import numpy as np
 import pybedtools as pbt
 import sys
@@ -242,7 +242,7 @@ class HilbertNormalized(HilbertBase):
 
 class HilbertMatrix(HilbertNormalized):
     def __init__(self, file, genome, chrom, matrix_dim, incr_column=None,
-                 default_chroms=True):
+                 default_chroms=True, save=False):
         """
         Subclass of HilbertNormalized that represents a genomic HilbertMatrix.
 
@@ -319,7 +319,8 @@ class HilbertMatrix(HilbertNormalized):
 
         # populate the matrix with the data contained in self.file
         self.build()
-        self.dump_matrix()
+        if save:
+            self.dump_matrix()
 
     def _cleanup(self):
         for temp_file in self.temp_files:
@@ -478,6 +479,23 @@ class HilbertMatrix(HilbertNormalized):
         Normalize matrix to total number of intervals
         """
         self.matrix /= self.num_intervals
+
+    def json(self):
+        """
+        Exports a JSON representation of the matrix and associated data.
+        """
+        d = {}
+        d['maxval'] = self.matrix.max()
+        d['minval'] = self.matrix.min()
+        d['dim'] = self.matrix_dim
+        data = []
+        for i in range(self.matrix_dim):
+            row = []
+            for j in range(self.matrix_dim):
+                row.append([self.matrix[i, j], i, j])
+            data.append(row)
+        d['matrix'] = data
+        return simplejson.dumps(d)
 
 
 class HilbertMatrixBigWig(HilbertMatrix):

@@ -8,6 +8,7 @@ import matplotlib
 import subprocess
 import bisect
 from pybedtools import genome_registry
+import wrappers
 
 
 def rot(n, x, y, rx, ry):
@@ -495,8 +496,7 @@ class HilbertMatrixBigWig(HilbertMatrix):
         the chrom/start/stop represented by each cell in the matrix and fills
         it with the value from the bigWig file.
         """
-        self.bigwig = BigWigFile(open(self.file))
-
+        self.bigwig = self.file
         chrom_rc, chrom_bins = self.chrom2rc()
 
         if self.chrom == 'genome':
@@ -505,16 +505,15 @@ class HilbertMatrixBigWig(HilbertMatrix):
         else:
             chroms = [self.chrom]
 
+        view = self.matrix.ravel()
         for chrom in chroms:
             rc = chrom_rc[chrom]
             nbins = chrom_bins[chrom]
-
+            offset = self.chrom_offsets[chrom] / self.dist_per_cell
             start, stop = self.chromdict[chrom]
-            results = self.bigwig.summarize(chrom, start, stop, nbins)
-            values = results.sum_data / results.valid_count
+            values = wrappers.bigwig_summary(self.bigwig, chrom, start, stop, nbins)
             values[np.isnan(values)] = 0
-
-            self.matrix[rc[:,0], rc[:, 1]] = values
+            view[offset:offset + len(values)] = values
 
         self._cleanup()
 
